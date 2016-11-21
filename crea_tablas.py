@@ -43,5 +43,19 @@ c.execute("CREATE TABLE CORREO(\
 	FOREIGN KEY(`de`) REFERENCES USUARIO ( correo ),\
 	FOREIGN KEY(`para_id`) REFERENCES CONTACTO ( contacto_id )\
 )")
+c.execute("CREATE TABLE CORREO_E(\
+	correo_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\
+	fecha NUMERIC NOT NULL,\
+	hora NUMERIC NOT NULL,\
+	de TEXT NOT NULL,\
+	para TEXT NOT NULL,\
+    para_id INTEGER NOT NULL, \
+	texto TEXT,\
+	asunto TEXT,\
+	adjunto TEXT,\
+    eliminado BOOLEAN NOT NULL,\
+	FOREIGN KEY(`de`) REFERENCES USUARIO ( correo ),\
+	FOREIGN KEY(`para_id`) REFERENCES CONTACTO ( contacto_id )\
+)")
 
 db.close()

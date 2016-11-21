@@ -3,10 +3,10 @@ Nombre: Rodriguez Bocanegra, Juan Daniel
 Materia: Seminario de Solucion de Problemas de Bases de datos
 Profesor: Michel Davalos Boites
 
-Actividad 05 (INSERT INTO)
-Implementar todos los "INSERT" que requiere el software: correo nuevo,
-crear contacto, etc. Subir reporte con capturas de pantalla de la ejecución
-del programa, el .sql y el .py (o repositorio).
+# Actividad 06 (SELECT FROM )
+Implementar las búsquedas de datos utilizando las sentencias "WHERE", "LIKE",
+"ORDER BY". Subir reporte con capturas de pantalla de la ejecución del programa,
+el .sql y el .py (o repositorio).
 """
 import sqlite3
 import os
@@ -21,7 +21,7 @@ class Usuario():
         self.apellidoMatU = data
         self.nombresU = data
     def __str__ (self):
-        return "\n\tCorreo: "+str(self.correo)+"\n\tContraseña: "+str(self.contra)\
+        return "\n\tEmail: "+str(self.correo)+"\n\tContraseña: ?"\
             +"\n\tNombre: "+str(self.apellidoPatU)+" "+str(self.apellidoMatU)+","\
             +str(self.nombresU)+"\n\tContactos registrados: "+str(self.contRegistrados)
 
@@ -33,6 +33,11 @@ class Contacto():
         self.apellidoPatC = data
         self.apellidoMatC = data
         self.nombresC = data
+    def __str__(self):
+        return "\tID: "+str(self.contacto_id)+"\n\tEmail: "+str(self.email)\
+            +"\n\tNombre: "+str(self.apellidoPatC)+" "+str(self.apellidoMatC)+","\
+            +str(self.nombresC)
+
 
 class Correo():
     def __init__(self, data):
@@ -47,14 +52,11 @@ class Correo():
         self.adjunto = data
         self.eliminado = data
 
-class MenuCorreoEnviado():
-    def __init__(self):
-        pass
 
 class MenuContatos():
-
     def __init__(self):
         pass
+
     def agregar(self, user, db):
         u = user
         cursor = db.cursor()
@@ -65,17 +67,17 @@ class MenuContatos():
         c.email = input("\n\tIngrese el correo del contacto: ")
         while len(c.email) < 1:
             return
-        while len(c.email) < 2: #modificar para que reconozca minimo 8 caracteres
+        while len(c.email) < 2: #<----- modificar para que reconozca minimo 8 caracteres
             print("\n\t(!) Ingrese un correo valido!")
-            c.email = input ("\tCorreo: ")
+            c.email = input ("\n\tCorreo: ")
 
         c.registra = u.correo
-        c.apellidoPatC = input("\tApellido paterno: ")
+        c.apellidoPatC = input("\n\tApellido paterno: ")
         while len(c.apellidoPatC) < 1 :
             c.apellidoPatC = input("\t(!) Ingrese un apellido valido: ")
-        c.apellidoMatC = input("\tApellido materno: ")
+        c.apellidoMatC = input("\n\tApellido materno: ")
 
-        c.nombresC = input("\tNombres(s): ")
+        c.nombresC = input("\n\tNombres(s): ")
         while len(c.nombresC) < 1:
             c.nombresC = input("\t(!) Ingrese un nombre valido: ")
 
@@ -86,6 +88,35 @@ class MenuContatos():
         db.commit()
         input("\n\tContacto registrado satisfactoriamente...")
 
+    def mostrarContactos(self,user,db):
+        flag = False
+        u = user
+        c = Contacto(None)
+        cursor = db.cursor()
+
+        os.system("clear")
+        rows = cursor.execute('SELECT * FROM CONTACTO WHERE registra = ?',(u.correo,))
+
+        print("\n\tContactos registrados\
+        \n\n=================================================")
+
+        for row in rows:
+            if row[0] != None:
+                flag = True
+            c.contacto_id = row[0]
+            c.email = row[1]
+            c.registra = row[2]
+            c.apellidoPatC = row[3]
+            c.apellidoMatC = row[4]
+            c.nombresC = row[5]
+            print(c)
+            print("-------------------------------------------------")
+
+        if flag == False:
+            print("\t(!) No existen contactos registrados!!")
+
+        print("=================================================")
+        input("\n\tPresione una tecla paracontinuar...")
 
     def menu(self,user,db):
 
@@ -93,16 +124,16 @@ class MenuContatos():
         while True:
             os.system("clear")
             print("\n\t* * * CONTACTOS * * * \n")
-            #print("\n\t1) Mostrar contactos ") # Muestra contactos - con id-
+            print("\n\t1) Mostrar contactos ") # Muestra contactos - con id-
             print("\t2) Agregar nuevo contacto") #Agrega un nuevo contacto -correo-
-            #print("\t3) Eliminar contacto") # Elimina de la base de datos (submenu)
-            #print("\t4) Modificar contacto") # Modifica un contacto (submenu)
+            print("\t3) Eliminar contacto (NO)") # Elimina de la base de datos (submenu)
+            print("\t4) Modificar contacto (NO)") # Modifica un contacto (submenu)
             print("\t0) Salir")
             opc = input ("\n\tIngrese una opcion: ")
             if opc.isdigit() == True:
                 opc = int(opc)
                 if opc == 1:
-                    pass
+                    self.mostrarContactos(user,db)
                 elif opc == 2:
                     os.system("clear")
                     self.agregar(user,db)
@@ -113,20 +144,22 @@ class MenuContatos():
                 elif opc == 0:
                     db.commit()
                     break
-
+            else:
+                print("\n\t(!) Seleccione una de las opciones del menu...")
+                input("\n\tPresione una tecla para continuar...")
 
 class MenuCorreoNuevo():
     def __init (self):
         pass
-    def menu(user,db):
-        menuC = MenuContatos()
+    def menu(self,user,db,mc):
+        menuC = mc
         u = user
         cursor = db.cursor()
         c = Correo(None)
 
         while True:
             os.system("clear")
-            print("\n\t* * * Correo Nuevo* * *\n")
+            print("\n\t* * * CORREO NUEVO * * *\n")
 
             ahora = time.strftime("%c")
             c.fecha = time.strftime("%x")
@@ -155,8 +188,9 @@ class MenuCorreoNuevo():
 
 
         linea = ''
-        print("\n\tPresione solo <ENTER> para continuar o escriba el texto...")
+        print("\n\tPresione solo < ENTER > para continuar o escriba el texto...")
         c.texto = input("\tTexto:\n\t")
+
         while True and len(c.texto) > 0:
             linea = input("\t")
             if len(linea) < 1:
@@ -187,6 +221,50 @@ class MenuCorreoNuevo():
         input("\n\tCorreo guardado exitosamente!")
         db.commit()
 
+class MenuCorreoEnviado():
+    def __init__(self):
+        pass
+
+    def recientes(self,user,db):
+        u = user
+        e = Correo(None)
+
+
+    def menu(self,user,db):
+        u = user
+        cursor = db.cursor()
+        e = Correo(None)
+        while True:
+            os.system("clear")
+            print("\n\t* * * CORREO ENVIADO * * *\n")
+            print("\t1) Recientes")      #Mostrar correos enviados de 5 en 5
+            print("\t2) Buscar por fecha") #Busca por fecha dada
+            print("\t3) Buscar por contacto") #Busca enviados a un cierto contacto
+            print("\t4) Buscar por texto") #Buscar por una cadena de texto,CC,asunto del correos
+            print("\t5) Eliminar") #Marca un correo como eliminado
+            print("\t6) Recuperar") #recupera todos los correos marcados como eliminados
+            print("\t7) Vaciar papelera") #Marca manda a una tabla especial el correo y lo elimina de la tabla original
+            print("\t0) Salir")
+            opc = input("\n\tSeleccione una opcion: ")
+
+            if opc.isdigit() == True:
+                opc = int(opc)
+                if opc == 1:
+                    self.recientes(user,db)
+                elif opc == 2:
+                    pass
+                elif opc == 3:
+                    pass
+                elif opc == 4:
+                    pass
+                elif opc == 0:
+                    db.commit()
+                    break
+            else:
+                print("\n\t(!) Seleccione una de las opciones del menu...")
+                input("\n\tPresione una tecla para continuar...")
+
+
 class MainMenu():
 
     def __init__(self):
@@ -195,37 +273,33 @@ class MainMenu():
         mNuevo = MenuCorreoNuevo()
         mEnviado = MenuCorreoEnviado()
         mContactos = MenuContatos()
-        u = user
-        db = db
-        op = -1
+
         while True:
             os.system("clear")
-            print("\n\tMENU GENERAL CORREOS\n\n\t1) Correo enviado\n\t2) Contactos \
+            print("\n\t* * * MENU  * * *\n\n\t1) Correo enviado\n\t2) Contactos \
                 \n\t3) Correo nuevo\n\t0) Salir")
-            op = input("\n\tOpcion:")
-            while op.isdigit() == False:
-                op = input("\n\t(!) Ingrese una opcion del menu: ")
+            opc = input("\n\tOpcion:")
 
-            op = int(op)
+            if opc.isdigit() == True:
+                opc = int(opc)
 
-            if op == 1:
-                os.system("clear")
-                print ("(!) Modulo no implementado...")
-            elif op == 2:
-                os.system("clear")
-                mContactos.menu(user,db)
-            elif op == 3:
-                os.system("clear")
-                MenuCorreoNuevo.menu(user,db)
-            elif op == 0:
-                db.commit()
-                break
+                if opc == 1:
+                    mEnviado.menu(user,db)
+                elif opc == 2:
+                    mContactos.menu(user,db)
+                elif opc == 3:
+                    mNuevo.menu(user,db,mContactos)
+                elif opc == 0:
+                    db.commit()
+                    break
             else:
-                input("\n\t(!) Ingrese una opcion del menu...")
+                print("\n\t(!) Seleccione una de las opciones del menu...")
+                input("\n\tPresione una tecla para continuar...")
 
 class Login_Registro():
     db = sqlite3.connect("db_correos.db")
-    #c = db.cursor(), c.execute("PRAGMA foreign_keys = ON")
+    c = db.cursor()
+    #c.execute("PRAGMA foreign_keys = ON")
 
     mg = MainMenu()
     user = Usuario(None)
@@ -241,13 +315,14 @@ class Login_Registro():
 
             os.system("clear")
             print("\n\t* * * LOGIN * * *\n\t(Presione <ENTER> para regresar)")
-            usuario = input("\n\tUsuario: ")
-            if usuario == '':
+
+            email = input("\n\tEmail: ")
+            if email == '':
                 break
             contra = getpass.getpass ("\n\tContraseña: ")
 
             rows = c.execute ('SELECT * FROM USUARIO WHERE correo = ? AND \
-                contra = ?',(usuario, contra))
+                contra = ?',(email, contra))
             for row in rows:
                 u.correo = row[0]
                 u.contra = row[1]
@@ -257,10 +332,9 @@ class Login_Registro():
 
             if u.correo != None:
                 input("\n\tLogin correcto!")
-
                 return True
             else:
-                input("\n\t(!) Usuario o contraseña incorrectos!!")
+                input("\n\t(!) Email o contraseña incorrectos!!")
 
     def registrarse(u,d):
         user = u
@@ -268,7 +342,7 @@ class Login_Registro():
         c = db.cursor()
         while True:
             print("\n\t* * * Registro * * * \n\t(Presione <ENTER> para regresar)")
-            user.correo = input ("\n\tCorreo: ")
+            user.correo = input ("\n\tEmail: ")
             if user.correo == '':
                 break
 
@@ -306,22 +380,20 @@ class Login_Registro():
         os.system("clear")
         print("\n\t* * * INICIO DE SESION/REGISTRO * * * \n\n\t1) Iniciar sesion \
             \n\t2) Registrarse \n\t0) Salir")
-        op = input("\n\tElige una opcion: ")
+        opc = input("\n\tElige una opcion: ")
 
-        while op.isdigit() == False:
-            op = input ("(!) Ingrese una de las opciones: ")
-
-        op = int (op)
-
-        if op == 1:
-            os.system("clear")
-            if login(user,db) == True:
-                mg.menuGeneral(user,db)
-
-        elif op == 2:
-            os.system("clear")
-            registrarse(user,db)
-
-        elif op == 0:
-            db.close()
-            exit()
+        if opc.isdigit() == True:
+            opc = int(opc)
+            if opc == 1:
+                os.system("clear")
+                if login(user,db) == True:
+                    mg.menuGeneral(user,db)
+            elif opc == 2:
+                os.system("clear")
+                registrarse(user,db)
+            elif opc == 0:
+                db.close()
+                exit()
+        else:
+            print("\n\t(!) Seleccione una de las opciones del menu...")
+            input("\n\tPresione una tecla para continuar...")
