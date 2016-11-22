@@ -21,9 +21,10 @@ class Usuario():
         self.apellidoMatU = data
         self.nombresU = data
     def __str__ (self):
-        return "\n\tEmail: "+str(self.correo)+"\n\tContraseña: ?"\
-            +"\n\tNombre: "+str(self.apellidoPatU)+" "+str(self.apellidoMatU)+","\
-            +str(self.nombresU)+"\n\tContactos registrados: "+str(self.contRegistrados)
+        return "\n\tEmail:      "+str(self.correo)\
+              +"\n\tContraseña: "\
+              +"\n\tNombre:     "+str(self.apellidoPatU)+" "+str(self.apellidoMatU)+","\
+            +str(self.nombresU)
 
 class Contacto():
     def __init__(self,data):
@@ -34,9 +35,15 @@ class Contacto():
         self.apellidoMatC = data
         self.nombresC = data
     def __str__(self):
-        return "\tID: "+str(self.contacto_id)+"\n\tEmail: "+str(self.email)\
-            +"\n\tNombre: "+str(self.apellidoPatC)+" "+str(self.apellidoMatC)+","\
-            +str(self.nombresC)
+        if self.apellidoMatC != None:
+            return "\tID: "+str(self.contacto_id)+\
+              "\n\tEmail: "+str(self.email)+\
+              "\n\tNombre: "+str(self.apellidoPatC)+" "+str(self.apellidoMatC)+","\
+                +str(self.nombresC)
+        else:
+            return "\tID: "+str(self.contacto_id)+\
+              "\n\tEmail: "+str(self.email)+\
+              "\n\tNombre: "+str(self.apellidoPatC)+","+str(self.nombresC)
 
 
 class Correo():
@@ -51,6 +58,15 @@ class Correo():
         self.asunto = data
         self.adjunto = data
         self.eliminado = data
+
+    def __str__(self):
+        return "\tFecha:   "+str(self.fecha)\
+            +"\n\tHora:    "+str(self.hora)\
+            +"\n\tAsunto:  "+str(self.asunto)\
+            +"\n\tTexto:\n\t------------------------------\n\t"+str(self.texto)\
+            +"\n\t------------------------------"\
+            +"\n\tAdjunto: "+str(self.adjunto)
+
 
 
 class MenuContatos():
@@ -76,6 +92,8 @@ class MenuContatos():
         while len(c.apellidoPatC) < 1 :
             c.apellidoPatC = input("\t(!) Ingrese un apellido valido: ")
         c.apellidoMatC = input("\n\tApellido materno: ")
+        if len(c.apellidoMatC) == 0:
+            c.apellidoMatC = None
 
         c.nombresC = input("\n\tNombres(s): ")
         while len(c.nombresC) < 1:
@@ -151,8 +169,8 @@ class MenuContatos():
 class MenuCorreoNuevo():
     def __init (self):
         pass
-    def menu(self,user,db,mc):
-        menuC = mc
+    def menu(self,user,db,mContactos):
+        menuC = mContactos
         u = user
         cursor = db.cursor()
         c = Correo(None)
@@ -184,8 +202,8 @@ class MenuCorreoNuevo():
             else:
                 print("\n\t(!) El contacto que escribio no esta registrado...")
                 input("\tPresione una tecla para continuar...")
+                os.system("clear")
                 menuC.agregar(user,db)
-
 
         linea = ''
         print("\n\tPresione solo < ENTER > para continuar o escriba el texto...")
@@ -195,7 +213,7 @@ class MenuCorreoNuevo():
             linea = input("\t")
             if len(linea) < 1:
                 break
-            c.texto += '\n'+linea
+            c.texto += '\n\t'+linea
         if len(c.texto ) == 0:
             c.texto = None
 
@@ -226,12 +244,41 @@ class MenuCorreoEnviado():
         pass
 
     def recientes(self,user,db):
-        u = user
-        e = Correo(None)
+        cursor = db.cursor()
 
+        i = 0
+        flag = False
+        os.system("clear")
+        rows = cursor.execute("SELECT * FROM CORREO WHERE de = ? ORDER BY correo_id DESC",\
+            (user.correo))
+        for row in rows:
+            if i > 4:
+                input("\n\tPresione una tecla para mostrar mas correos...")
+                os.system("clear")
+                i = 0
+            e = Correo(None)
+            if row[0] != None:
+                flag = True
+            e.contacto_id = row[0]
+            e.fecha = row [1]
+            e.hora = row [2]
+            e.de = row [3]
+            e.para = row [4]
+            e.para_id = row [5]
+            e.texto = row [6]
+            e.asunto = row [7]
+            e.adjunto = row [8]
+            e.eliminado = row[9]
+            print(e)
+            print("=========================================")
+            i += 1
+
+        if flag == False:
+            print("\n\t(!) No existen correos enviados!!")
+
+        input("\n\tNo hay mas correos, presione una tecla para regresar...")
 
     def menu(self,user,db):
-        u = user
         cursor = db.cursor()
         e = Correo(None)
         while True:
@@ -260,8 +307,11 @@ class MenuCorreoEnviado():
                 elif opc == 0:
                     db.commit()
                     break
+                else:
+                    print("\n\t(!) Seleccione una de las opciones del menu!!!")
+                    input("\n\tPresione una tecla para continuar...")
             else:
-                print("\n\t(!) Seleccione una de las opciones del menu...")
+                print("\n\t(!) Ingrese digitos!!!")
                 input("\n\tPresione una tecla para continuar...")
 
 
@@ -292,8 +342,11 @@ class MainMenu():
                 elif opc == 0:
                     db.commit()
                     break
+                else:
+                    print("\n\t(!) Seleccione una de las opciones del menu!!!")
+                    input("\n\tPresione una tecla para continuar...")
             else:
-                print("\n\t(!) Seleccione una de las opciones del menu...")
+                print("\n\t(!) Ingrese solo digitos!!!")
                 input("\n\tPresione una tecla para continuar...")
 
 class Login_Registro():
@@ -302,7 +355,6 @@ class Login_Registro():
     #c.execute("PRAGMA foreign_keys = ON")
 
     mg = MainMenu()
-    user = Usuario(None)
 
     def __init__(self):
         pass
@@ -315,7 +367,6 @@ class Login_Registro():
 
             os.system("clear")
             print("\n\t* * * LOGIN * * *\n\t(Presione <ENTER> para regresar)")
-
             email = input("\n\tEmail: ")
             if email == '':
                 break
@@ -336,47 +387,53 @@ class Login_Registro():
             else:
                 input("\n\t(!) Email o contraseña incorrectos!!")
 
-    def registrarse(u,d):
-        user = u
-        db = d
+    def registrarse(user,db):
         c = db.cursor()
         while True:
+            os.system("clear")
             print("\n\t* * * Registro * * * \n\t(Presione <ENTER> para regresar)")
             user.correo = input ("\n\tEmail: ")
             if user.correo == '':
+                return
+            c.execute ('SELECT * FROM USUARIO WHERE correo = ?',(user.correo))
+            if c.fetchone() != None:
+                print("\n\t(!) El correo ingresado ya ha sido registrado!!")
+                input("\n\tPresione una tecla para continuar...")
+            else:
                 break
+        while True:
+            pass1 = getpass.getpass("\tContrañena: ")
+            pass2 = getpass.getpass("\tIngrese de nuevo la contraseña: ")
+            if pass1 != pass2 :
+                print("\n\t(!) Las contraseñas no coinciden!")
+            if len(pass1) < 1:
+                print("\n\t(!) Ingrese una contraseña valida")
+            else:
+                if pass1 == pass2:
+                    user.contra = pass1
+                    break
+        user.apellidoPatU = input("\tApellido paterno: ")
+        while user.apellidoPatU.isalnum() == False:
+            print("\n\t(!) Apellido invalido!")
+            user.apellidoPatU = input ("\tIngrese su apellido paterno de nuevo: ")
 
-            while True:
-                pass1 = getpass.getpass("\tContrañena: ")
-                pass2 = getpass.getpass("\tIngrese de nuevo la contraseña: ")
-                if pass1 != pass2 :
-                    print("\n\t(!) Las contraseñas no coinciden!")
-                if len(pass1) < 1:
-                    print("\n\t(!) Ingrese una contraseña valida")
-                else:
-                    if pass1 == pass2:
-                        user.contra = pass1
-                        break
+        user.apellidoMatU = input("\tApellido Materno: ")
 
-            user.apellidoPatU = input("\tApellido paterno: ")
-            while user.apellidoPatU.isalnum() == False:
-                print("\n\t(!) Apellido invalido!")
-                user.apellidoPatU = input ("\tIngrese su apellido paterno de nuevo: ")
-
-            user.apellidoMatU = input("\tApellido Materno: ")
-
-            user.nombresU = input("\tNombre(s): ")
-            while len(user.nombresU) < 1:
-                print("(!) Nombre invalido!")
-                user.nombresU = input("\tIngrese su nombre de nuevo: ")
-            c.execute("INSERT INTO USUARIO (correo,contra,apellidoPatU,\
-                apellidoMatU,nombresU) VALUES (?,?,?,?,?)",\
-                (user.correo, user.contra,user.apellidoPatU,user.apellidoMatU,\
-                user.nombresU))
-            db.commit()
-            break
+        user.nombresU = input("\tNombre(s): ")
+        while len(user.nombresU) < 1:
+            print("(!) Nombre invalido!")
+            user.nombresU = input("\tIngrese su nombre de nuevo: ")
+        c.execute("INSERT INTO USUARIO (correo,contra,apellidoPatU,\
+            apellidoMatU,nombresU) VALUES (?,?,?,?,?)",\
+            (user.correo, user.contra,user.apellidoPatU,user.apellidoMatU,\
+            user.nombresU))
+        db.commit()
+        print("\n\tRegistro exitoso!")
+        input("\n\tPresione una tecla para continuar...")
 
     while True:
+        user = Usuario(None)
+
         os.system("clear")
         print("\n\t* * * INICIO DE SESION/REGISTRO * * * \n\n\t1) Iniciar sesion \
             \n\t2) Registrarse \n\t0) Salir")
@@ -394,6 +451,9 @@ class Login_Registro():
             elif opc == 0:
                 db.close()
                 exit()
+            else:
+                print("\n\t(!) Seleccione una de las opciones del menu!!!")
+                input("\n\tPresione una tecla para continuar...")
         else:
-            print("\n\t(!) Seleccione una de las opciones del menu...")
+            print("\n\t(!) Ingrese solo digitos...")
             input("\n\tPresione una tecla para continuar...")
