@@ -179,9 +179,8 @@ class MenuCorreoNuevo():
             os.system("clear")
             print("\n\t* * * CORREO NUEVO * * *\n")
 
-            ahora = time.strftime("%c")
-            c.fecha = time.strftime("%x")
-
+            #ahora = time.strftime("%c")
+            c.fecha = time.strftime("%d/%m/%Y")
             c.hora = time.strftime("%X")
             print("\tFecha: ", c.fecha)
             print("\tHora:  ",c.hora)
@@ -227,7 +226,7 @@ class MenuCorreoNuevo():
 
         c.eliminado = False
 
-        ahora = time.strftime("%c")
+        #ahora = time.strftime("%c")
         c.fecha = time.strftime("%x")
         c.hora = time.strftime("%X")
 
@@ -243,14 +242,12 @@ class MenuCorreoEnviado():
     def __init__(self):
         pass
 
-    def recientes(self,user,db):
-        cursor = db.cursor()
-
+    def recientes(self,user,cursor):
         i = 0
         flag = False
         os.system("clear")
-        rows = cursor.execute("SELECT * FROM CORREO WHERE de = ? ORDER BY correo_id DESC",\
-            (user.correo))
+        rows = cursor.execute("SELECT * FROM CORREO WHERE de = ? ORDER BY \
+            correo_id DESC", (user.correo) )
         for row in rows:
             if i > 4:
                 input("\n\tPresione una tecla para mostrar mas correos...")
@@ -272,11 +269,43 @@ class MenuCorreoEnviado():
             print(e)
             print("=========================================")
             i += 1
-
         if flag == False:
             print("\n\t(!) No existen correos enviados!!")
-
         input("\n\tNo hay mas correos, presione una tecla para regresar...")
+
+    def busquedaFecha(self,user,cursor):
+        flag = False
+        while True:
+            os.system("clear")
+            fecha = input("\n\tIngrese la fecha en formato dd/mm/aaaa: ")
+            if len(fecha) < 10 or len(fecha) > 10:
+                print("\n\t(!) Ingrese la fecha en el formato que se muestra!!")
+                input("\n\tPresione una tecla para continuar...")
+            else:
+                break
+        rows = cursor.execute("SELECT * FROM CORREO WHERE de = ? AND \
+            fecha = ?",(user.correo,fecha) )
+        os.system("clear")
+        for row in rows:
+            e = Correo(None)
+            if row[0] != None:
+                flag = True
+            e.contacto_id = row[0]
+            e.fecha = row [1]
+            e.hora = row [2]
+            e.de = row [3]
+            e.para = row [4]
+            e.para_id = row [5]
+            e.texto = row [6]
+            e.asunto = row [7]
+            e.adjunto = row [8]
+            e.eliminado = row[9]
+            print(e)
+            print("=========================================")
+        if flag == False:
+            print("\n\t(!) No existen correos enviados con la fecha dada!!")
+        input("\n\tPresione una tecla para regresar...")
+
 
     def menu(self,user,db):
         cursor = db.cursor()
@@ -297,9 +326,9 @@ class MenuCorreoEnviado():
             if opc.isdigit() == True:
                 opc = int(opc)
                 if opc == 1:
-                    self.recientes(user,db)
+                    self.recientes(user,cursor)
                 elif opc == 2:
-                    pass
+                    self.busquedaFecha(user,cursor)
                 elif opc == 3:
                     pass
                 elif opc == 4:
