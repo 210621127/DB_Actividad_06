@@ -62,6 +62,7 @@ class Correo():
     def __str__(self):
         return "\tFecha:   "+str(self.fecha)\
             +"\n\tHora:    "+str(self.hora)\
+            +"\n\tPara:    "+str(self.para)\
             +"\n\tAsunto:  "+str(self.asunto)\
             +"\n\tTexto:\n\t------------------------------\n\t"+str(self.texto)\
             +"\n\t------------------------------"\
@@ -256,16 +257,12 @@ class MenuCorreoEnviado():
             e = Correo(None)
             if row[0] != None:
                 flag = True
-            e.contacto_id = row[0]
             e.fecha = row [1]
             e.hora = row [2]
-            e.de = row [3]
             e.para = row [4]
-            e.para_id = row [5]
             e.texto = row [6]
             e.asunto = row [7]
             e.adjunto = row [8]
-            e.eliminado = row[9]
             print(e)
             print("=========================================")
             i += 1
@@ -277,10 +274,13 @@ class MenuCorreoEnviado():
         flag = False
         while True:
             os.system("clear")
+            print("\n\tPresione solo < ENTER > para regresar...")
             fecha = input("\n\tIngrese la fecha en formato dd/mm/aaaa: ")
-            if len(fecha) < 10 or len(fecha) > 10:
+            if len(fecha) < 10 and len(fecha) > 1 or len(fecha) > 10:
                 print("\n\t(!) Ingrese la fecha en el formato que se muestra!!")
                 input("\n\tPresione una tecla para continuar...")
+            elif len(fecha) == 0:
+                return
             else:
                 break
         rows = cursor.execute("SELECT * FROM CORREO WHERE de = ? AND \
@@ -290,22 +290,64 @@ class MenuCorreoEnviado():
             e = Correo(None)
             if row[0] != None:
                 flag = True
-            e.contacto_id = row[0]
             e.fecha = row [1]
             e.hora = row [2]
-            e.de = row [3]
             e.para = row [4]
-            e.para_id = row [5]
             e.texto = row [6]
             e.asunto = row [7]
             e.adjunto = row [8]
-            e.eliminado = row[9]
             print(e)
             print("=========================================")
         if flag == False:
             print("\n\t(!) No existen correos enviados con la fecha dada!!")
         input("\n\tPresione una tecla para regresar...")
 
+
+    def busContacto(self,user,cursor):
+        self.list = []
+        i = 0
+        flag = False
+        rows = cursor.execute("SELECT * FROM CONTACTO WHERE registra = ?",\
+            (user.correo) )
+        print("\n\tContactos registrados: ")
+        for row in rows:
+            i += 1
+            self.list.append(row[1])
+            print("\t",i,") "+self.list[i-1])
+        while True:
+            selec = input("\n\tSeleccione un contacto: ")
+            if selec.isdigit():
+                selec = int(selec)
+                if selec < 1 or selec > i:
+                        print("\n\t(!) Seleccione un numero de la lista!")
+                else:
+                    break
+            else:
+                print("\n\t(!) Ingrese un numero!")
+        tmp = self.list[selec-1]
+        rows = cursor.execute("SELECT * FROM CORREO WHERE de = ? AND para = ?",\
+            (user.correo,tmp))
+
+        os.system("clear")
+        for row in rows:
+            e = Correo(None)
+            if row[0] != None:
+                flag = True
+            e.fecha = row [1]
+            e.hora = row [2]
+            e.para = row [4]
+            e.texto = row [6]
+            e.asunto = row [7]
+            e.adjunto = row [8]
+            print(e)
+            print("=========================================")
+
+        if flag == False:
+            print("\n\t(!) No existen correos registrados!!")
+        input("\n\tPresione una tecla para regresar...")
+
+    def busTexto(self,user,cursor):
+        flag = Flase
 
     def menu(self,user,db):
         cursor = db.cursor()
@@ -330,7 +372,7 @@ class MenuCorreoEnviado():
                 elif opc == 2:
                     self.busquedaFecha(user,cursor)
                 elif opc == 3:
-                    pass
+                    self.busContacto(user,cursor)
                 elif opc == 4:
                     pass
                 elif opc == 0:
@@ -357,7 +399,7 @@ class MainMenu():
             os.system("clear")
             print("\n\t* * * MENU  * * *\n\n\t1) Correo enviado\n\t2) Contactos \
                 \n\t3) Correo nuevo\n\t0) Salir")
-            opc = input("\n\tOpcion:")
+            opc = input("\n\tSeleccione una opcion: ")
 
             if opc.isdigit() == True:
                 opc = int(opc)
