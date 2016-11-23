@@ -347,7 +347,37 @@ class MenuCorreoEnviado():
         input("\n\tPresione una tecla para regresar...")
 
     def busTexto(self,user,cursor):
-        flag = Flase
+        flag = False
+        while True:
+            print("\n\tIngrese el texto a buscar o presione < ENTER > para regresar...")
+            text = input("\n\tTexto: ")
+            if len(text) == 0:
+                return
+            else:
+                text = '%'+text+'%'
+
+                break
+        ###ERROR sentencia LIKE ###
+        rows = cursor.execute("SELECT * FROM CORREO WHERE texto LIKE text")
+
+        os.system("clear")
+        for row in rows:
+            e = Correo(None)
+            if row[0] != None:
+                flag = True
+            e.fecha = row [1]
+            e.hora = row [2]
+            e.para = row [4]
+            e.texto = row [6]
+            e.asunto = row [7]
+            e.adjunto = row [8]
+            print(e)
+            print("=========================================")
+
+        if flag == False:
+            print("\n\t(!) No hay conincidencias!!")
+
+        input("\n\tPresione una tecla para regresar...")
 
     def menu(self,user,db):
         cursor = db.cursor()
@@ -374,7 +404,7 @@ class MenuCorreoEnviado():
                 elif opc == 3:
                     self.busContacto(user,cursor)
                 elif opc == 4:
-                    pass
+                    self.busTexto(user,cursor)
                 elif opc == 0:
                     db.commit()
                     break
