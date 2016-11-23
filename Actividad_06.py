@@ -354,11 +354,8 @@ class MenuCorreoEnviado():
             if len(text) == 0:
                 return
             else:
-                text = '%'+text+'%'
-
                 break
-        ###ERROR sentencia LIKE ###
-        rows = cursor.execute("SELECT * FROM CORREO WHERE texto LIKE text")
+        rows = cursor.execute("SELECT * FROM CORREO WHERE texto LIKE % ?",(text+'%',))
 
         os.system("clear")
         for row in rows:
