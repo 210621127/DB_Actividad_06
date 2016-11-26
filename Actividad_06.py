@@ -60,10 +60,11 @@ class Correo():
         self.eliminado = data
 
     def __str__(self):
-        return "\tFecha:   "+str(self.fecha)\
-            +"\n\tHora:    "+str(self.hora)\
-            +"\n\tPara:    "+str(self.para)\
-            +"\n\tAsunto:  "+str(self.asunto)\
+        return "\tID:     "+str(self.correo_id)\
+            +"\n\tFecha:  "+str(self.fecha)\
+            +"\n\tHora:   "+str(self.hora)\
+            +"\n\tPara:   "+str(self.para)\
+            +"\n\tAsunto: "+str(self.asunto)\
             +"\n\tTexto:\n\t------------------------------\n\t"+str(self.texto)\
             +"\n\t------------------------------"\
             +"\n\tAdjunto: "+str(self.adjunto)
@@ -227,7 +228,6 @@ class MenuCorreoNuevo():
 
         c.eliminado = False
 
-        #ahora = time.strftime("%c")
         c.fecha = time.strftime("%x")
         c.hora = time.strftime("%X")
 
@@ -247,8 +247,8 @@ class MenuCorreoEnviado():
         i = 0
         flag = False
         os.system("clear")
-        rows = cursor.execute("SELECT * FROM CORREO WHERE de = ? ORDER BY \
-            correo_id DESC", (user.correo) )
+        rows = cursor.execute("SELECT * FROM CORREO WHERE de = ? AND eliminado\
+            = ? ORDER BY correo_id DESC", (user.correo,False) )
         for row in rows:
             if i > 4:
                 input("\n\tPresione una tecla para mostrar mas correos...")
@@ -257,6 +257,7 @@ class MenuCorreoEnviado():
             e = Correo(None)
             if row[0] != None:
                 flag = True
+            e.correo_id = row[0]
             e.fecha = row [1]
             e.hora = row [2]
             e.para = row [4]
@@ -284,12 +285,13 @@ class MenuCorreoEnviado():
             else:
                 break
         rows = cursor.execute("SELECT * FROM CORREO WHERE de = ? AND \
-            fecha = ?",(user.correo,fecha) )
+            fecha = ? AND eliminado = ?",(user.correo,fecha,False) )
         os.system("clear")
         for row in rows:
             e = Correo(None)
             if row[0] != None:
                 flag = True
+            e.correo_id = row[0]
             e.fecha = row [1]
             e.hora = row [2]
             e.para = row [4]
@@ -300,8 +302,8 @@ class MenuCorreoEnviado():
             print("=========================================")
         if flag == False:
             print("\n\t(!) No existen correos enviados con la fecha dada!!")
-        input("\n\tPresione una tecla para regresar...")
-
+        else:
+            self.subMenu(user,cursor)
 
     def busContacto(self,user,cursor):
         self.list = []
@@ -325,14 +327,14 @@ class MenuCorreoEnviado():
             else:
                 print("\n\t(!) Ingrese un numero!")
         tmp = self.list[selec-1]
-        rows = cursor.execute("SELECT * FROM CORREO WHERE de = ? AND para = ?",\
-            (user.correo,tmp))
-
+        rows = cursor.execute("SELECT * FROM CORREO WHERE de = ? AND para = ?\
+            AND eliminado = ?",(user.correo,tmp,False))
         os.system("clear")
         for row in rows:
             e = Correo(None)
             if row[0] != None:
                 flag = True
+            e.correo_id = row[0]
             e.fecha = row [1]
             e.hora = row [2]
             e.para = row [4]
@@ -344,10 +346,14 @@ class MenuCorreoEnviado():
 
         if flag == False:
             print("\n\t(!) No existen correos registrados!!")
-        input("\n\tPresione una tecla para regresar...")
+            input("\n\tPresione una tecla para continuar...")
+        else:
+            self.subMenu(user,cursor)
 
     def busTexto(self,user,cursor):
-        flag = False
+        flagT = False
+        flagA = False
+        flagC = False
         while True:
             print("\n\tIngrese el texto a buscar o presione < ENTER > para regresar...")
             text = input("\n\tTexto: ")
@@ -355,13 +361,15 @@ class MenuCorreoEnviado():
                 return
             else:
                 break
-        rows = cursor.execute("SELECT * FROM CORREO WHERE texto LIKE % ?",(text+'%',))
-
+        rows = cursor.execute("SELECT * FROM CORREO WHERE texto LIKE ? AND \
+            eliminado = ?",('%'+text+'%',False))
         os.system("clear")
+        print("\n\tBusqueda en TEXTO:\n")
         for row in rows:
             e = Correo(None)
             if row[0] != None:
-                flag = True
+                flagT = True
+            e.correo_id = row[0]
             e.fecha = row [1]
             e.hora = row [2]
             e.para = row [4]
@@ -371,10 +379,96 @@ class MenuCorreoEnviado():
             print(e)
             print("=========================================")
 
-        if flag == False:
-            print("\n\t(!) No hay conincidencias!!")
+        rows = cursor.execute("SELECT * FROM CORREO WHERE para LIKE ? AND \
+            eliminado = ?",('%'+text+'%',False))
+        print("\n\n\tBusqueda en CC:\n")
+        for row in rows:
+            e = Correo(None)
+            if row[0] != None:
+                flagC = True
+            e.correo_id = row[0]
+            e.fecha = row [1]
+            e.hora = row [2]
+            e.para = row [4]
+            e.texto = row [6]
+            e.asunto = row [7]
+            e.adjunto = row [8]
+            print(e)
+            print("=========================================")
 
-        input("\n\tPresione una tecla para regresar...")
+        rows = cursor.execute("SELECT * FROM CORREO WHERE asunto LIKE ? AND \
+            eliminado = ?",('%'+text+'%',False))
+        print("\n\n\tBusqueda en ASUNTO:\n")
+        for row in rows:
+            e = Correo(None)
+            if row[0] != None:
+                flagA= True
+            e.correo_id = row[0]
+            e.fecha = row [1]
+            e.hora = row [2]
+            e.para = row [4]
+            e.texto = row [6]
+            e.asunto = row [7]
+            e.adjunto = row [8]
+            print(e)
+            print("=========================================")
+
+        if flagT == False and flagC == False and flagA == False:
+            print("\n\t(!) No hay conincidencias!!")
+            input("\n\tPresione una tecla para continuar...")
+        else:
+            self.subMenu(user,cursor)
+
+    def subMenu(self,user,cursor):
+        flag = False
+        while True:
+            id = input("\n\tIntroduzca el ID del correo para seleccionar uno: ")
+            if id.isdigit():
+                rows = cursor.execute('SELECT* FROM CORREO WHERE correo_id = ?\
+                AND eliminado = ?',(id,False))
+                for row in rows:
+                    e = Correo(None)
+                    if row[0] != None:
+                        flag = True
+                        os.system("clear")
+                    e.correo_id = row[0]
+                    e.fecha = row [1]
+                    e.hora = row [2]
+                    e.para = row [4]
+                    e.texto = row [6]
+                    e.asunto = row [7]
+                    e.adjunto = row [8]
+                    print("=========================================")
+                if flag == False:
+                    print("\n\t(!) EL ID ingresado no existe!!")
+                else:
+                    break
+            else:
+                print("\n\t(!) Ingrese solo numeros!!")
+
+        while True:
+            os.system("clear")
+            print("\n\tCorreo encontrado:")
+            print("\n\t=========================================")
+            print(e)
+            print("\n\t=========================================")
+            print("\n\t1) Descargar adjunto\n\t2) Eliminar\n\t3) Reenviar a...")
+            opc = input("\n\tSeleccione una opcion o presione < ENTER > para regresar...")
+            if opc == '':
+                return
+            elif opc == '1':
+                pass
+            elif opc == '2':
+                pass
+            elif opc == '3':
+                pass
+            else:
+                print("\n\tIngrese una de las opciones...")
+                input("\n\tPresione una tecla para continuar...")
+
+    def Recuperar(self,user,cursor):
+        pass
+
 
     def menu(self,user,db):
         cursor = db.cursor()
@@ -386,9 +480,8 @@ class MenuCorreoEnviado():
             print("\t2) Buscar por fecha") #Busca por fecha dada
             print("\t3) Buscar por contacto") #Busca enviados a un cierto contacto
             print("\t4) Buscar por texto") #Buscar por una cadena de texto,CC,asunto del correos
-            print("\t5) Eliminar") #Marca un correo como eliminado
-            print("\t6) Recuperar") #recupera todos los correos marcados como eliminados
-            print("\t7) Vaciar papelera") #Marca manda a una tabla especial el correo y lo elimina de la tabla original
+            print("\t5) Recuperar todos los eliminados") #recupera todos los correos marcados como eliminados
+            print("\t6) Vaciar papelera") #Marca manda a una tabla especial el correo y lo elimina de la tabla original
             print("\t0) Salir")
             opc = input("\n\tSeleccione una opcion: ")
 
@@ -402,6 +495,10 @@ class MenuCorreoEnviado():
                     self.busContacto(user,cursor)
                 elif opc == 4:
                     self.busTexto(user,cursor)
+                elif opc == 5:
+                    pass
+                elif opc == 6:
+                    pass
                 elif opc == 0:
                     db.commit()
                     break
@@ -493,7 +590,7 @@ class Login_Registro():
             user.correo = input ("\n\tEmail: ")
             if user.correo == '':
                 return
-            c.execute ('SELECT * FROM USUARIO WHERE correo = ?',(user.correo))
+            c.execute ('SELECT * FROM USUARIO WHERE correo = ?',(user.correo,))
             if c.fetchone() != None:
                 print("\n\t(!) El correo ingresado ya ha sido registrado!!")
                 input("\n\tPresione una tecla para continuar...")
